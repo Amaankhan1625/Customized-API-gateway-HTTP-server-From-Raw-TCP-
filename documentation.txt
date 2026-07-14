@@ -1,0 +1,380 @@
+The Final Architecture
+
+By the end, your project should look like this:
+
+                   Internet
+                       │
+                    TCP Socket
+                       │
+            Connection Manager
+                       │
+                 HTTP Parser
+                       │
+                 Router (/users)
+                       │
+             Middleware Pipeline
+                       │
+              Controller/Handler
+                       │
+             HTTP Response Builder
+                       │
+              WebSocket Upgrade
+                       │
+          WebSocket Frame Parser
+                       │
+          API Gateway Features
+
+This is almost how a real web server works.
+
+Phase 1 — Learn TCP (Don't touch HTTP yet)
+Goal
+
+Understand how computers communicate over a TCP connection.
+
+Build Project 1
+tcp-server/
+│
+├── src/
+│     server.js
+│
+└── package.json
+
+Implement:
+
+net.createServer()
+
+Learn:
+
+What is a socket?
+What is a port?
+What happens when a client connects?
+What happens when data arrives?
+What happens when the client disconnects?
+
+Example output:
+
+Client Connected
+
+Received:
+Hello
+
+Client Disconnected
+
+At this stage do not parse HTTP.
+
+Just print bytes.
+
+Phase 2 — TCP Client
+
+Most people skip this.
+
+Don't.
+
+Build
+
+client.js
+
+Use
+
+net.createConnection()
+
+Send
+
+Hello Server
+
+Server prints it.
+
+Now you understand
+
+Client
+
+↓
+
+TCP
+
+↓
+
+Server
+Phase 3 — Understand Raw Bytes
+
+Now print
+
+console.log(data);
+
+instead of
+
+data.toString()
+
+You'll see
+
+<Buffer 48 65 6c 6c 6f>
+
+Learn
+
+Buffers
+UTF-8
+Binary vs Text
+
+Very important for WebSockets.
+
+Phase 4 — Build a Tiny HTTP Server
+
+Now open Chrome
+
+http://localhost:8080
+
+Chrome sends
+
+GET / HTTP/1.1
+Host: localhost
+
+...
+
+Your server prints it.
+
+Now you know
+
+HTTP is just text over TCP.
+
+Phase 5 — Parse HTTP
+
+Create
+
+src/http/parser.js
+
+Input
+
+GET /users?id=5 HTTP/1.1
+Host: localhost
+
+Output
+
+{
+    method:"GET",
+    path:"/users",
+    query:{
+        id:"5"
+    },
+    headers:{
+        host:"localhost"
+    }
+}
+
+Don't worry about POST bodies yet.
+
+Phase 6 — Build Response Builder
+
+Instead of writing
+
+socket.write(...)
+
+Create
+
+response.js
+
+Example
+
+response.send(socket,{
+    status:200,
+    body:"Hello"
+});
+
+Internally it writes
+
+HTTP/1.1 200 OK
+Content-Length:5
+
+Hello
+Phase 7 — Router
+
+Instead of
+
+if(path==="/")
+
+Create
+
+router.get("/",handler);
+
+router.get("/users",handler);
+
+Now you have your own Express-like router.
+
+Phase 8 — Middleware
+
+Build
+
+app.use(logger);
+
+app.use(auth);
+
+Understand how Express middleware works.
+
+Phase 9 — Static Files
+
+Support
+
+GET /index.html
+
+Read file
+
+fs.readFile()
+
+Return HTML.
+
+Now your browser loads a webpage.
+
+Phase 10 — POST Requests
+
+Now parse
+
+Content-Length
+
+Read body
+
+{
+    "name":"Amaan"
+}
+
+Support JSON parsing.
+
+Phase 11 — Keep Alive
+
+Understand
+
+Connection: keep-alive
+
+Why browsers don't reconnect every request.
+
+Phase 12 — WebSocket Upgrade
+
+Now the fun begins.
+
+Browser sends
+
+Upgrade: websocket
+
+Detect it.
+
+Return
+
+101 Switching Protocols
+
+Now HTTP becomes WebSocket.
+
+Phase 13 — WebSocket Frames
+
+Implement
+
+FIN bit
+Opcode
+Payload length
+Masking
+Ping
+Pong
+Close
+
+This is the hardest part.
+
+Phase 14 — Build Chat App
+Browser
+
+↓
+
+WebSocket
+
+↓
+
+Server
+
+↓
+
+Broadcast
+
+Now multiple clients can chat.
+
+Phase 15 — API Gateway
+
+Finally build
+
+Gateway
+
+↓
+
+Authentication
+
+↓
+
+Rate Limiting
+
+↓
+
+Logging
+
+↓
+
+Reverse Proxy
+
+↓
+
+Microservices
+Suggested Folder Structure
+my-http-server/
+
+src/
+
+    tcp/
+        server.js
+        client.js
+
+    http/
+        parser.js
+        request.js
+        response.js
+        router.js
+
+    websocket/
+        handshake.js
+        frame.js
+        websocket.js
+
+    gateway/
+        proxy.js
+        loadBalancer.js
+        rateLimiter.js
+
+    utils/
+
+    index.js
+Concepts to Learn Along the Way
+Phase	Learn
+TCP	Sockets, Ports, Connections
+Buffers	Binary, UTF-8, Streams
+HTTP	Methods, Headers, Status Codes
+Parsing	Strings, CRLF, Query Parameters
+Routing	URL matching
+Middleware	Function chaining
+Streams	Large file handling
+WebSocket	Handshake, Frames
+API Gateway	Reverse Proxy, Authentication, Rate Limiting
+What to Build Each Week
+Week 1
+✅ TCP Server
+✅ TCP Client
+✅ Buffers
+✅ Streams
+Week 2
+✅ HTTP Parser
+✅ Response Builder
+✅ Router
+Week 3
+✅ POST Support
+✅ Static Files
+✅ Middleware
+Week 4
+✅ WebSocket
+✅ Chat Application
+Week 5
+✅ Reverse Proxy
+✅ API Gateway
+✅ Rate Limiter
+✅ Logging

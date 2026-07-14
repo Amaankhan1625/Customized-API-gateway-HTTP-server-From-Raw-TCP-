@@ -1,0 +1,14 @@
+{
+  "name": "tcp-server",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Week 1 raw TCP HTTP server for learning buffers and request parsing",
+  "main": "src/server.js",
+  "scripts": {
+    "start": "node src/server.js",
+    "benchmark": "autocannon -c 100 -d 10 http://localhost:8080"
+  },
+  "engines": {
+    "node": ">=18"
+  }
+}
