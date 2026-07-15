@@ -722,7 +722,9 @@ autocannon -c 100 -d 20 http://localhost:8080/
 
 Start a new project folder: `mkdir api-gateway && cd api-gateway && npm init -y`
 
-### Week 4 — Reverse proxy core
+### Week 4 — Reverse proxy scaffold
+
+**Status:** the current `API_Gateway/src/server.js`, `API_Gateway/src/proxy.js`, `API_Gateway/src/health.js`, and `API_Gateway/src/config.js` now implement the forwarding path, config loading, and upstream health checks.
 
 **Install packages:**
 ```bash
@@ -752,8 +754,14 @@ routes:
 
   - prefix: /health
     target: http://localhost:3001
-    auth: none
+    auth: public
 ```
+
+**Week 4 goal:**
+- Load YAML config and resolve the best route for each request.
+- Forward the request to the configured upstream service.
+- Add health checks so a down service returns `502 Bad Gateway` instead of hanging or crashing.
+- Preserve request headers and attach a request ID for tracing.
 
 #### Proxy core (`src/proxy.js`)
 
@@ -860,7 +868,17 @@ curl http://localhost:3000/api/users/1    # should return 502
 
 ---
 
-### Week 5 — Auth middleware
+### Week 5 — Auth middleware (JWT + API keys)
+
+**Goal:** protect routes with the right credential type, reject bad requests with precise status codes, and inject verified identity into the upstream request.
+
+**What this week must support:**
+- Read `X-API-Key` and validate it against an in-memory map or Redis store.
+- Parse `Authorization: Bearer <token>` and verify JWT signature plus expiry.
+- Use `RS256` so the gateway verifies with a public key instead of sharing a symmetric secret.
+- Drive auth choice from YAML per route: some routes are public, some require JWT, some require API keys.
+- Return `401 Unauthorized` for missing or invalid credentials and `403 Forbidden` for valid credentials that still lack permission.
+- Inject verified claims into the upstream request as `X-User-ID` and `X-User-Role`.
 
 **Install packages:**
 ```bash
@@ -957,6 +975,18 @@ function verifyJWT(req, res, next) {
   }
 }
 
+function requireRole(...allowedRoles) {
+  return (req, res, next) => {
+    const role = req.user?.role || 'user';
+
+    if (!allowedRoles.includes(role)) {
+      return res.status(403).json({ error: 'Forbidden', message: 'Insufficient role' });
+    }
+
+    next();
+  };
+}
+
 // Middleware factory: reads auth type from route config
 function requireAuth(authType) {
   if (authType === 'jwt') return verifyJWT;
@@ -995,6 +1025,11 @@ curl http://localhost:3000/api/users/1 \
 curl http://localhost:3000/api/users/1 \
   -H "Authorization: Bearer invalid.token.here"
 # Expected: 401 Unauthorized
+
+# Valid token but wrong role
+curl http://localhost:3000/api/admin \
+  -H "Authorization: Bearer <token_from_script>"
+# Expected: 403 Forbidden
 
 # Valid API key
 curl http://localhost:3000/api/products/5 \

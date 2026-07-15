@@ -1,8 +1,8 @@
 {
-  "name": "tcp-server",
+  "name": "api-gateway",
   "version": "1.0.0",
   "private": true,
-  "description": "Raw TCP HTTP server project",
+  "description": "Custom API gateway with YAML config, reverse proxying, health checks, and hot reload",
   "main": "src/server.js",
   "scripts": {
     "start": "node src/server.js",

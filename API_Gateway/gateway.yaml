@@ -1,0 +1,18 @@
+routes:
+  - prefix: /api/users
+    target: http://localhost:3001
+    auth: jwt
+    roles: [user, admin]
+
+  - prefix: /api/products
+    target: http://localhost:3002
+    auth: apikey
+
+  - prefix: /api/admin
+    target: http://localhost:3001
+    auth: jwt
+    roles: [admin]
+
+  - prefix: /health
+    target: http://localhost:3001
+    auth: public
